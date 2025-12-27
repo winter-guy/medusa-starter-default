@@ -1,10 +1,11 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig } from "@medusajs/framework/utils"
 
-loadEnv(process.env.NODE_ENV || 'development', process.cwd())
+loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
@@ -15,31 +16,45 @@ module.exports = defineConfig({
     databaseDriverOptions: {
       ssl: false,
       sslmode: "disable",
-    }
-  },
-  admin: {
-    vite: (config) => {
-      return {
-        ...config,
-        server: {
-          ...config.server,
-          host: "0.0.0.0",
-          // Allow all hosts when running in Docker (development mode)
-          // In production, this should be more restrictive
-          allowedHosts: [
-            "localhost",
-            ".localhost",
-            "127.0.0.1",
-          ],
-          hmr: {
-            ...config.server?.hmr,
-            // HMR websocket port inside container
-            port: 5173,
-            // Port browser connects to (exposed in docker-compose.yml)
-            clientPort: 5173,
-          },
-        },
-      }
     },
+  },
+  modules: [
+    // ...
+    {
+      resolve: "@medusajs/medusa/file",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/file-s3",
+            id: "s3",
+            options: {
+              file_url: process.env.S3_FILE_URL,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              region: process.env.S3_REGION,
+              bucket: process.env.S3_BUCKET,
+              endpoint: process.env.S3_ENDPOINT,
+              // other options...
+              force_path_style: true,
+            },
+          },
+        ],
+      },
+    },
+  ],
+  admin: {
+    vite: (config) => ({
+      ...config,
+      server: {
+        ...config.server,
+        host: "0.0.0.0",
+        allowedHosts: ["localhost", ".localhost", "127.0.0.1"],
+        hmr: {
+          ...config.server?.hmr,
+          port: 5173,
+          clientPort: 5173,
+        },
+      },
+    }),
   },
 })
