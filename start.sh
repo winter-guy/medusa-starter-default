@@ -5,10 +5,8 @@ echo "Running database migrations..."
 npx medusa db:migrate
 
 # Check if "seed" argument is passed
-if [ "$1" = "seed" ]; then
-  echo "Seeding database..."
-  yarn seed || echo "Seeding failed, continuing..."
-fi
+# echo "Seeding database..."
+# yarn seed || echo "Seeding failed, continuing..."
 
 echo "Starting Medusa development server..."
 yarn dev
